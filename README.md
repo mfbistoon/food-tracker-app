@@ -16,6 +16,12 @@ Open http://localhost:3000.
 
 With your phone on the same Wi-Fi, open `http://<your-computer-ip>:3000`. The photo button opens the camera. Use "Add to Home Screen" for an app-like experience.
 
+## Deploy on Vercel
+
+1. Import this repo at https://vercel.com/new (Framework Preset: Other).
+2. Add environment variables: `ANTHROPIC_API_KEY` and `APP_PASSWORD` (required on Vercel; the API refuses requests without it). `CLAUDE_MODEL` is optional.
+3. Deploy. The app asks for the password the first time you take a photo or request advice, then remembers it on that device.
+
 ## Notes
 
 - Meal logs and goals are stored in the browser (localStorage) on each device. Use Settings → Export/Import to move data.

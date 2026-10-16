@@ -1,4 +1,5 @@
 const path = require('path');
+const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const Anthropic = require('@anthropic-ai/sdk');
@@ -10,6 +11,23 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Password gate for all API routes. Unset locally = open; on Vercel it must be set.
+function requirePassword(req, res, next) {
+  const expected = process.env.APP_PASSWORD;
+  if (!expected) {
+    if (process.env.VERCEL) {
+      return res.status(503).json({ error: 'Server is not configured: set APP_PASSWORD in the Vercel project settings.' });
+    }
+    return next();
+  }
+  const given = Buffer.from(String(req.get('x-app-password') || ''));
+  const want = Buffer.from(expected);
+  if (given.length === want.length && crypto.timingSafeEqual(given, want)) return next();
+  res.status(401).json({ error: 'Wrong or missing password.', code: 'auth' });
+}
+app.use('/api', requirePassword);
+app.get('/api/auth', (req, res) => res.json({ ok: true }));
 
 let client = null;
 function getClient() {
@@ -142,7 +160,13 @@ app.post('/api/advice', async (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Food Tracker running at http://localhost:${PORT}`);
-  if (!process.env.ANTHROPIC_API_KEY) console.warn('Warning: ANTHROPIC_API_KEY is not set.');
-});
+// Vercel imports the exported app; locally we start a listener ourselves.
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Food Tracker running at http://localhost:${PORT}`);
+    if (!process.env.ANTHROPIC_API_KEY) console.warn('Warning: ANTHROPIC_API_KEY is not set.');
+    if (!process.env.APP_PASSWORD) console.warn('Warning: APP_PASSWORD is not set; the API is open to anyone who can reach this server.');
+  });
+}
+
+module.exports = app;

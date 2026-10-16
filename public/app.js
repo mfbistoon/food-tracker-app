@@ -138,6 +138,31 @@
     }).join('') : '<div class="empty">Nothing logged in this range.</div>';
   }
 
+  // ---------- api (password-protected) ----------
+  const getPw = () => { try { return localStorage.getItem('appPassword') || ''; } catch { return ''; } };
+  const setPw = (v) => { try { v ? localStorage.setItem('appPassword', v) : localStorage.removeItem('appPassword'); } catch {} };
+
+  async function api(path, body) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-app-password': getPw() },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        const entered = prompt(attempt === 0 && !getPw() ? 'Enter the app password:' : 'Wrong password. Try again:');
+        if (entered === null) throw new Error('Password required.');
+        setPw(entered);
+        continue;
+      }
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      return data;
+    }
+    setPw('');
+    throw new Error('Wrong password.');
+  }
+
   // ---------- capture & review ----------
   const modal = $('#modal');
   let pending = null; // { image (base64), mediaType, thumb, result }
@@ -170,13 +195,7 @@
   async function analyze(note) {
     setModal('loading');
     try {
-      const res = await fetch('/api/analyze', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: pending.image, mediaType: 'image/jpeg', note }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-      pending.result = data;
+      pending.result = await api('/api/analyze', { image: pending.image, mediaType: 'image/jpeg', note });
       showReview();
     } catch (err) {
       $('#modal-error-msg').textContent = err.message;
@@ -269,12 +288,7 @@
     btn.disabled = true; btn.textContent = 'Thinking…';
     out.hidden = false; out.innerHTML = '<div class="spinner"></div>';
     try {
-      const res = await fetch('/api/advice', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goals, days }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      const data = await api('/api/advice', { goals, days });
       out.innerHTML = md(data.advice);
     } catch (err) {
       out.innerHTML = `<p class="error">${esc(err.message)}</p>`;

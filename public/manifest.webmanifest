@@ -1,0 +1,9 @@
+{
+  "name": "Food Tracker",
+  "short_name": "FoodTracker",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f7f6",
+  "theme_color": "#B5694D",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

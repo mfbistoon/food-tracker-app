@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#B5694D">
+  <title>Food Tracker</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar"><h1>🥗 Food Tracker</h1></header>
+
+  <main>
+    <!-- TODAY -->
+    <section id="tab-today" class="tab active">
+      <div class="card ring-card">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 120 120" class="ring">
+            <circle cx="60" cy="60" r="52" class="ring-bg"/>
+            <circle cx="60" cy="60" r="52" class="ring-fg" id="ring-fg"/>
+          </svg>
+          <div class="ring-label"><strong id="ring-cal">0</strong><span id="ring-goal">/ 2000 kcal</span></div>
+        </div>
+        <div class="macros" id="macro-bars"></div>
+      </div>
+
+      <label class="btn primary big" for="photo-input">📷 Snap or choose a photo</label>
+      <input id="photo-input" type="file" accept="image/*" capture="environment" hidden>
+
+      <h2>Today's meals</h2>
+      <div id="today-list" class="list"></div>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="tab-history" class="tab">
+      <div class="seg" id="range-seg">
+        <button data-range="7" class="active">7 days</button>
+        <button data-range="30">30 days</button>
+      </div>
+      <div class="card">
+        <h2>Calories per day</h2>
+        <div id="chart-cal"></div>
+        <p class="muted small" id="avg-line"></p>
+      </div>
+      <div class="card">
+        <h2>Average macro split</h2>
+        <div id="macro-split"></div>
+      </div>
+      <h2>Daily log</h2>
+      <div id="history-list" class="list"></div>
+    </section>
+
+    <!-- ADVICE -->
+    <section id="tab-advice" class="tab">
+      <div class="card">
+        <h2>Personalized advice</h2>
+        <p class="muted">Claude reviews your recent logs and goals and suggests what to try next.</p>
+        <button id="advice-btn" class="btn primary big">✨ Get personalized advice</button>
+        <p class="muted small" id="advice-hint"></p>
+      </div>
+      <div id="advice-out" class="card md" hidden></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="tab-settings" class="tab">
+      <div class="card">
+        <h2>Daily goals</h2>
+        <form id="goals-form" class="form">
+          <label>Calories (kcal)<input type="number" name="calories" min="0" inputmode="numeric"></label>
+          <label>Protein (g)<input type="number" name="protein_g" min="0" inputmode="numeric"></label>
+          <label>Carbs (g)<input type="number" name="carbs_g" min="0" inputmode="numeric"></label>
+          <label>Fat (g)<input type="number" name="fat_g" min="0" inputmode="numeric"></label>
+          <button class="btn primary" type="submit">Save goals</button>
+          <span id="goals-saved" class="muted small"></span>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Your data</h2>
+        <p class="muted small">Logs are stored only in this browser. Export to back up or move to another device.</p>
+        <div class="row">
+          <button id="export-btn" class="btn">Export JSON</button>
+          <label class="btn" for="import-input">Import JSON</label>
+          <input id="import-input" type="file" accept="application/json" hidden>
+        </div>
+        <button id="clear-btn" class="btn danger">Delete all logs</button>
+      </div>
+      <p class="muted small center">Calorie and macro values are AI estimates from photos, not medical advice.</p>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button data-tab="today" class="active"><span>🏠</span>Today</button>
+    <button data-tab="history"><span>📈</span>History</button>
+    <button data-tab="advice"><span>✨</span>Advice</button>
+    <button data-tab="settings"><span>⚙️</span>Settings</button>
+  </nav>
+
+  <!-- REVIEW MODAL -->
+  <div id="modal" class="modal" hidden>
+    <div class="sheet">
+      <div id="modal-loading" class="center" hidden>
+        <div class="spinner"></div>
+        <p>Analyzing your meal…</p>
+      </div>
+      <div id="modal-error" hidden>
+        <p class="error" id="modal-error-msg"></p>
+        <button class="btn" id="modal-close-err">Close</button>
+      </div>
+      <form id="review-form" hidden>
+        <img id="review-img" alt="Your meal">
+        <p class="muted small" id="review-meta"></p>
+        <label>Meal name<input name="name" required maxlength="100"></label>
+        <div class="grid2">
+          <label>Calories<input name="calories" type="number" min="0" step="1" inputmode="numeric" required></label>
+          <label>Protein (g)<input name="protein_g" type="number" min="0" step="0.1" inputmode="decimal" required></label>
+          <label>Carbs (g)<input name="carbs_g" type="number" min="0" step="0.1" inputmode="decimal" required></label>
+          <label>Fat (g)<input name="fat_g" type="number" min="0" step="0.1" inputmode="decimal" required></label>
+        </div>
+        <details><summary>Items detected</summary><ul id="review-items" class="small"></ul></details>
+        <label>Add a note and re-analyze (optional)
+          <div class="row"><input id="review-note" placeholder="e.g. it was a large portion, with olive oil"><button type="button" class="btn" id="reanalyze">Re-run</button></div>
+        </label>
+        <div class="row end">
+          <button type="button" class="btn" id="review-cancel">Cancel</button>
+          <button type="submit" class="btn primary">Save meal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

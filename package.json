@@ -1,0 +1,14 @@
+{
+  "name": "food-tracker-app",
+  "version": "1.0.0",
+  "description": "Snap a photo of your food; Claude estimates calories and macros, logs them, and gives personalized advice.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.60.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0"
+  }
+}
